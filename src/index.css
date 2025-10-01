@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+*{
+  box-sizing: border-box;
+}
+body{
+  background-color: rgb(146, 242, 242);
+  font-family:"Roboto", sans-serif ;
+}
+#tabbutton{
+  margin: 10rem auto;
+  height: 5rem;
+  
+
+}
+#tabbutton h2{
+  font-size: 2rem;
+  color: rgb(17, 62, 62);
+ 
+}
+#tabbutton menu{
+  list-style:none;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+#tabbutton menu button{
+  height: 3rem;
+  width: 15rem;
+  font-size: 1.5rem;
+  background-color: rgb(100, 185, 185) ;
+  border:none;
+  font-family: ;
+  color: rgb(17, 62, 62);
+  font-weight: bold;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+.leaflet-control-attribution {
+  font-size: 10px !important ;
+ background-color: transparent !important;
+ 
+}
+
+
+/* CSS để tùy chỉnh Tooltip và loại bỏ khung trắng */
+
+.custom-label {
+  /* Xóa nền, viền và đổ bóng */
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  /* Tùy chỉnh chữ */
+  color: black !important; /* Đảm bảo chữ vẫn nhìn thấy được */
+ 
+  font-size: 1rem; /* Điều chỉnh kích thước chữ nếu cần */
+  padding: 0; /* Xóa padding mặc định */
+}
+
+/* Quan trọng: Ẩn mũi tên (cũng là một phần của khung) */
+.custom-label.leaflet-tooltip-bottom:before,
+.custom-label.leaflet-tooltip-top:before,
+.custom-label.leaflet-tooltip-left:before,
+.custom-label.leaflet-tooltip-right:before {
+  border: none !important;
+}
+#map{
+  height:1000px; 
+  width: 50%; 
+  border: 1px solid #ccc;
+  display: flex !important;
+  justify-Content:flex-end !important;
+}
+
