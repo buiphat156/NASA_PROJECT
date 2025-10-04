@@ -87,7 +87,12 @@ let currentMarker = null; // lưu marker hiện tại
 map.on("click", async function(e) {
   const { lat, lng } = e.latlng;
 
-  await updateWeatherFromCoords(lat, lng, `(${lat.toFixed(2)}, ${lng.toFixed(2)})`);
+  // ✅ lưu lại tọa độ để dùng khi tải CSV
+  currentLat = lat;
+  currentLon = lng;
+  currentCity = `(${lat.toFixed(2)}, ${lng.toFixed(2)})`;
+
+  await updateWeatherFromCoords(lat, lng, currentCity);
 
   // xóa marker cũ nếu có
   if (currentMarker) {
@@ -100,6 +105,7 @@ map.on("click", async function(e) {
     .bindPopup("Selected Location")
     .openPopup();
 });
+
 
 // Khi search thành phố
 searchBox.addEventListener("keydown", async function (e) {

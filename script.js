@@ -8,6 +8,8 @@
 let currentUnit = "C"; // "C" hoặc "F"
 let currentCity = "Hanoi";
 let userContext = "general"; // "general", "travel", "sports", "work", "outdoor"
+let currentLat = null;
+let currentLon = null;
 
 //const cities = {
 //  "Hanoi": [21.0285, 105.8542],
@@ -169,6 +171,8 @@ async function fetchForecastData(lat, lon) {
 async function updateWeather(city) {
   currentCity = city;
   const [lat, lon] = cities[city];
+  currentLat = lat;
+  currentLon = lon;
 
   try {
     console.log("Fetching data for", city, lat, lon);
@@ -590,8 +594,12 @@ document.addEventListener("mouseup", () => {
 });
 
 document.getElementById("download-csv-btn").addEventListener("click", async function () {
-  const [lat, lon] = cities[currentCity];
-  const forecastData = await fetchForecastData(lat, lon);
+  if (currentLat === null || currentLon === null) {
+  alert("⚠️ Please select a location first!");
+  return;
+}
+const forecastData = await fetchForecastData(currentLat, currentLon);
+
   const normalized = normalizeForecast(forecastData.meteoData);
 
   let csvContent = "Date,Avg Temp (°C),Avg Humidity (%),Avg Wind (km/h),Max Rain Probability (%),Avg Cloud (%),Avg Visibility (km),Total Precipitation (mm)\n";
