@@ -9,7 +9,12 @@ let currentUnit = "C"; // "C" hoặc "F"
 let currentCity = "Hanoi";
 let userContext = "general"; // "general", "travel", "sports", "work", "outdoor"
 
-
+//const cities = {
+//  "Hanoi": [21.0285, 105.8542],
+//  "Ho Chi Minh": [10.7769, 106.7009],
+//  "Da Nang": [16.0471, 108.2068],
+//  "Can Tho": [10.0452, 105.7469]
+//};
 
 const cities = {
   "An Giang": [10.5149, 105.1132],
@@ -81,7 +86,7 @@ async function fetchNASAData(lat, lon) {
   const today = new Date();
   const end = today.toISOString().split("T")[0].replace(/-/g, "");
   const startDate = new Date();
-  startDate.setDate(today.getDate() - (31*2));
+  startDate.setDate(today.getDate() - 5);
   const start = startDate.toISOString().split("T")[0].replace(/-/g, "");
 
   const url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,RH2M,WS2M&community=RE&longitude=${lon}&latitude=${lat}&start=${start}&end=${end}&format=JSON`;
@@ -154,7 +159,7 @@ async function fetchForecastData(lat, lon) {
     nasaData,
     meteoData,
     ...normalized[today] || {},
-    time: Object.keys(normalized).slice(0, 7) // 7 ngày
+    time: Object.keys(normalized).slice(0, 7) // 5 ngày
   };
 }
 
@@ -189,7 +194,6 @@ async function updateWeather(city) {
 
     // Cập nhật UI
     document.getElementById("city-name").innerText = city;
-    document.getElementById("download-csv-btn").style.display = "inline-block";
     document.getElementById("desc").innerText = "Data from Open-Meteo & NASA";
     document.getElementById("temp").innerText = avgTemp !== null ? formatTemp(avgTemp) : "--";
     document.getElementById("humidity").innerText = humidityToday !== null ? humidityToday + "%" : "--";
@@ -246,76 +250,110 @@ async function updateWeather(city) {
   }
 }
 
-//async function updateWeatherFromCoords(lat, lon, cityName) {
-//  try {
-//    const forecastData = await fetchForecastData(lat, lon);
-//    const nasaData = await fetchNASAData(lat, lon);
-//
-//    document.getElementById("city-name").innerText = cityName;
-//    document.getElementById("desc").innerText = "Data from coordinates";
-//
-//    const tempToday = nasaData.T2M ? toNumber(Object.values(nasaData.T2M)[0]) : null;
-//    const humidityToday = nasaData.RH2M ? toNumber(Object.values(nasaData.RH2M)[0]) : null;
-//    const windToday = nasaData.WS2M ? toNumber((Object.values(nasaData.WS2M)[0] * 3.6).toFixed(1)) : null;
-//
-//    const todayData = forecastData || {};
-//    const avgTemp = todayData.avgTemp !== undefined ? todayData.avgTemp : tempToday;
-//    const rainProb = todayData.maxRainProb !== undefined ? todayData.maxRainProb : 0;
-//    const visibility = todayData.avgVisibility !== undefined ? todayData.avgVisibility.toFixed(2) : "--";
-//    const precipitation = todayData.totalPrecipitation !== undefined ? todayData.totalPrecipitation : 0;
-//    const cloudCover = todayData.avgCloud !== undefined ? todayData.avgCloud : 0;
-//
-//    document.getElementById("temp").innerText = avgTemp !== null ? formatTemp(avgTemp) : "--";
-//    document.getElementById("humidity").innerText = humidityToday !== null ? humidityToday + "%" : "--";
-//    document.getElementById("wind").innerText = windToday !== null ? windToday + " km/h" : "--";
-//    document.getElementById("visibility").innerText = visibility !== "--" ? visibility + " km" : "--";
-//    document.getElementById("precipitation").innerText = precipitation + " mm";
-//    document.getElementById("rainProb").innerText = rainProb + "%";
-//
-//    // Forecast 5 ngày
-//    const forecastContainer = document.getElementById("forecast-container");
-//    forecastContainer.innerHTML = "";
-//    const days = forecastData.time || [];
-//    days.forEach((day, i) => {
-//      const dayData = normalizeForecast(forecastData.meteoData)[day] || {}; // Sử dụng meteoData từ forecastData
-//      const div = document.createElement("div");
-//      div.className = "forecast-day";
-//      div.innerHTML = `
-//        <span>${day}</span>
-//        <span>${dayData.avgTemp !== undefined ? Math.round(dayData.avgTemp) : "--"}°C</span>
-//        <span>☁️ ${dayData.avgCloud !== undefined ? Math.round(dayData.avgCloud) : "--"}%</span>
-//        <span>💧 ${dayData.maxRainProb !== undefined ? Math.round(dayData.maxRainProb) : "--"}%</span>
-//        <span>🌧️ ${dayData.totalPrecipitation !== undefined ? dayData.totalPrecipitation : "--"} mm</span>
-//      `;
-//      forecastContainer.appendChild(div);
-//    });
-//
-//    // Lời khuyên
-//    const adviceList = generateAdvice(
-//      avgTemp,
-//      "Weather data",
-//      humidityToday,
-//      windToday,
-//      userContext,
-//      rainProb,
-//      cloudCover,
-//      visibility,
-//    );
-//    const adviceUl = document.getElementById("advice-list");
-//    adviceUl.innerHTML = "";
-//    adviceList.forEach(advice => {
-//      const li = document.createElement("li");
-//      li.textContent = advice;
-//      adviceUl.appendChild(li);
-//    });
-//
-//  } catch (err) {
-//    console.error("Error fetching data for coords:", err);
-//    document.getElementById("city-name").innerText = cityName;
-//    document.getElementById("desc").innerText = "⚠️ Data unavailable";
-//  }
-//}
+async function updateWeatherFromCoords(lat, lon, cityName) {
+  try {
+    // 1) Lấy dữ liệu (fetchForecastData đã bao gồm nasaData)
+    const forecastData = await fetchForecastData(lat, lon);
+    // an toàn: forecastData có thể là null/undefined
+    const nasaData = forecastData && forecastData.nasaData ? forecastData.nasaData : null;
 
+    // 2) Cập nhật header city/desc
+    const cityEl = document.getElementById("city-name");
+    const descEl = document.getElementById("desc");
+    if (cityEl) cityEl.innerText = cityName;
+    if (descEl) descEl.innerText = "Data from coordinates";
+
+    // 3) Safe getters cho NASA (tránh Object.values(...) khi object rỗng)
+    const safeFirstValue = obj => {
+      if (!obj) return null;
+      const vals = Object.values(obj || {});
+      return vals.length ? toNumber(vals[0]) : null;
+    };
+
+    const tempToday = safeFirstValue(nasaData?.T2M);
+    const humidityToday = safeFirstValue(nasaData?.RH2M);
+    const windTodayRaw = safeFirstValue(nasaData?.WS2M); // m/s
+    const windToday = windTodayRaw != null ? Number((windTodayRaw * 3.6).toFixed(1)) : null; // -> km/h
+
+    // 4) Lấy dữ liệu từ forecastData (nếu fetchForecastData đã tính sẵn ngày hôm nay)
+    const todayData = forecastData || {};
+    const avgTemp = (todayData.avgTemp !== undefined && todayData.avgTemp !== null) ? todayData.avgTemp : tempToday;
+    const rainProb = (todayData.maxRainProb !== undefined && todayData.maxRainProb !== null) ? todayData.maxRainProb : 0;
+    const visibilityNum = (todayData.avgVisibility !== undefined && todayData.avgVisibility !== null) ? Number(todayData.avgVisibility) : null;
+    const visibilityText = visibilityNum != null ? visibilityNum.toFixed(2) : "--";
+    const precipitation = (todayData.totalPrecipitation !== undefined && todayData.totalPrecipitation !== null) ? todayData.totalPrecipitation : 0;
+    const cloudCover = (todayData.avgCloud !== undefined && todayData.avgCloud !== null) ? todayData.avgCloud : 0;
+
+    // 5) Update DOM (kiểm tra tồn tại phần tử trước)
+    const setIf = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.innerText = value;
+    };
+
+    setIf("temp", avgTemp !== null ? formatTemp(avgTemp) : "--");
+    setIf("humidity", humidityToday !== null ? humidityToday + "%" : "--");
+    setIf("wind", windToday !== null ? windToday + " km/h" : "--");
+    setIf("visibility", visibilityText !== "--" ? visibilityText + " km" : "--");
+    setIf("precipitation", precipitation + " mm");
+    setIf("rainProb", rainProb + "%");
+
+    // 6) Forecast 5 ngày — tính normalize 1 lần, an toàn khi meteoData không tồn tại
+    const forecastContainer = document.getElementById("forecast-container");
+    if (forecastContainer) {
+      forecastContainer.innerHTML = "";
+      const days = Array.isArray(forecastData?.time) ? forecastData.time : [];
+      const normalizedAll = forecastData?.meteoData ? normalizeForecast(forecastData.meteoData) : {};
+
+      days.forEach(day => {
+        const dayData = normalizedAll[day] || {};
+        const tempText = dayData.avgTemp != null ? Math.round(dayData.avgTemp) + "°C" : "--";
+        const cloudText = dayData.avgCloud != null ? Math.round(dayData.avgCloud) + "%" : "--";
+        const rainText = dayData.maxRainProb != null ? Math.round(dayData.maxRainProb) + "%" : "--";
+        const precipText = dayData.totalPrecipitation != null ? dayData.totalPrecipitation + " mm" : "--";
+
+        const div = document.createElement("div");
+        div.className = "forecast-day";
+        div.innerHTML = `
+          <span>${day}</span>
+          <span>${tempText}</span>
+          <span>☁️ ${cloudText}</span>
+          <span>💧 ${rainText}</span>
+          <span>🌧️ ${precipText}</span>
+        `;
+        forecastContainer.appendChild(div);
+      });
+    }
+
+    // 7) Lời khuyên — truyền số (không truyền string "12.34")
+    const adviceList = generateAdvice(
+      avgTemp,
+      "Weather data",
+      humidityToday,
+      windToday,
+      userContext,
+      rainProb,
+      cloudCover,
+      visibilityNum
+    );
+
+    const adviceUl = document.getElementById("advice-list");
+    if (adviceUl) {
+      adviceUl.innerHTML = "";
+      adviceList.forEach(advice => {
+        const li = document.createElement("li");
+        li.textContent = advice;
+        adviceUl.appendChild(li);
+      });
+    }
+
+  } catch (err) {
+    console.error("Error fetching data for coords:", err);
+    const cityEl = document.getElementById("city-name");
+    const descEl = document.getElementById("desc");
+    if (cityEl) cityEl.innerText = cityName;
+    if (descEl) descEl.innerText = "⚠️ Data unavailable";
+  }
+}
 // -------------------------------
 // 📅 Lấy thời tiết theo ngày chọn
 // -------------------------------
@@ -380,8 +418,8 @@ async function fetchWeatherForDate() {
 // 🎯 Render từ NASA cho 1 ngày cụ thể
 // -------------------------------
 function updateWeatherFromAPI(city, cityData) {
-  const current = cityData.current;
 
+  const current = cityData.current;
   const temp = toNumber(current.temp);
   const tempMin = toNumber(current.tempMin);
   const tempMax = toNumber(current.tempMax);
@@ -550,37 +588,28 @@ document.addEventListener("mouseup", () => {
   isResizing = false;
   document.body.style.cursor = "default";
 });
-// === Nút tải CSV ===
-document.getElementById("download-csv-btn").addEventListener("click", function () {
-  // Lấy dữ liệu từ DOM
-  const location = document.querySelector(".card h2")?.innerText || "";
-  const tempMatch = document.querySelector(".card").innerText.match(/Temperature:\s*([\d.,]+°[CF])/);
-  const temperature = tempMatch ? tempMatch[1] : "";
 
-  const humidity = document.querySelector(".card").innerText.match(/Humidity:.*\n?/)?.[0].split(":")[1].trim() || "";
-  const wind = document.querySelector(".card").innerText.match(/Wind:.*\n?/)?.[0].split(":")[1].trim() || "";
-  const visibility = document.querySelector(".card").innerText.match(/Visibility:.*\n?/)?.[0].split(":")[1].trim() || "";
-  const precipitation = document.querySelector(".card").innerText.match(/Precipitation:.*\n?/)?.[0].split(":")[1].trim() || "";
-  const rainProb = document.querySelector(".card").innerText.match(/Rain Probability:.*\n?/)?.[0].split(":")[1].trim() || "";
+document.getElementById("download-csv-btn").addEventListener("click", async function () {
+  const [lat, lon] = cities[currentCity];
+  const forecastData = await fetchForecastData(lat, lon);
+  const normalized = normalizeForecast(forecastData.meteoData);
 
-  // Tạo dữ liệu CSV (không có Advice)
-  const csvContent =
-    "Location,Temperature,Humidity,Wind,Visibility,Precipitation,Rain Probability\n" +
-    `${location},${temperature},${humidity},${wind},${visibility},${precipitation},${rainProb}`;
+  let csvContent = "Date,Avg Temp (°C),Avg Humidity (%),Avg Wind (km/h),Max Rain Probability (%),Avg Cloud (%),Avg Visibility (km),Total Precipitation (mm)\n";
 
-  // Xuất file CSV
-  // Thêm BOM để Excel nhận đúng UTF-8
+  Object.keys(normalized).slice(0, 7).forEach(day => {
+    const d = normalized[day];
+    csvContent += `${day},${Math.round(d.avgTemp)},${Math.round(d.avgHumidity)},${Math.round(d.avgWind)},${Math.round(d.maxRainProb)},${Math.round(d.avgCloud)},${d.avgVisibility.toFixed(2)},${d.totalPrecipitation}\n`;
+  });
+
+  // Xuất file CSV với BOM cho tiếng Việt
   const BOM = "\uFEFF";
   const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
   link.setAttribute("href", url);
-  link.setAttribute("download", "weather.csv");
+  link.setAttribute("download", currentCity + "_7days.csv");
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 });
-
-

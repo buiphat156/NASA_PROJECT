@@ -81,7 +81,27 @@ searchBox.style.marginBottom = "10px";
 const panel = document.getElementById("weather-info");
 panel.insertBefore(searchBox, panel.firstChild);
 
-// Bắt sự kiện khi Enter
+let currentMarker = null; // lưu marker hiện tại
+
+// Khi click map
+map.on("click", async function(e) {
+  const { lat, lng } = e.latlng;
+
+  await updateWeatherFromCoords(lat, lng, `(${lat.toFixed(2)}, ${lng.toFixed(2)})`);
+
+  // xóa marker cũ nếu có
+  if (currentMarker) {
+    map.removeLayer(currentMarker);
+  }
+
+  // tạo marker mới
+  currentMarker = L.marker([lat, lng], { icon: redIcon })
+    .addTo(map)
+    .bindPopup("Selected Location")
+    .openPopup();
+});
+
+// Khi search thành phố
 searchBox.addEventListener("keydown", async function (e) {
   if (e.key === "Enter") {
     const query = searchBox.value;
@@ -92,16 +112,22 @@ searchBox.addEventListener("keydown", async function (e) {
       const { x, y, label } = results[0]; // x=lng, y=lat
       map.setView([y, x], 10);
 
-      // Add marker kết quả
-      L.marker([y, x], { icon: redIcon }).addTo(map)
+      // xóa marker cũ nếu có
+      if (currentMarker) {
+        map.removeLayer(currentMarker);
+      }
+
+      // tạo marker mới
+      currentMarker = L.marker([y, x], { icon: redIcon })
+        .addTo(map)
         .bindPopup(label)
         .openPopup();
     }
   }
 });
 
+
 // Event listener to zoom to searched location
 map.on('geosearch/showlocation', function (e) {
   map.setView([e.location.y, e.location.x], HANOI_ZOOM_LEVEL);
 });
-
